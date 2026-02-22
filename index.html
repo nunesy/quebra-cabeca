@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Desafio: Edificando o Corpo</title>
+    <style>
+        :root { --bg: #1a1a2e; --board-bg: #16213e; --text: #e94560; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; text-align: center; }
+        
+        .container { display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 20px; }
+
+        /* Área onde as peças ficam esperando */
+        #external-area { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 10px; 
+            justify-content: center; 
+            min-height: 160px; 
+            width: 80%; 
+            padding: 20px;
+            border: 2px dashed #444;
+            border-radius: 15px;
+        }
+
+        /* O Tabuleiro (O Corpo) */
+        #puzzle-board { 
+            display: grid; 
+            grid-template-columns: repeat(3, 150px); 
+            gap: 5px; 
+            background: var(--board-bg);
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+        }
+
+        .slot {
+            width: 150px;
+            height: 150px;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.05);
+        }
+
+        .tile {
+            width: 140px;
+            height: 140px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: grab;
+            background-color: #e94560;
+            color: white;
+            font-weight: bold;
+            border-radius: 8px;
+            text-align: center;
+            padding: 5px;
+            font-size: 0.85em;
+            background-size: 450px 450px;
+            transition: transform 0.2s;
+        }
+
+        .revealed {
+            width: 150px;
+            height: 150px;
+            border-radius: 0;
+            color: transparent;
+            cursor: default;
+        }
+
+        #victory-message { display: none; color: #4ecca3; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <h1>Desafio: O Lugar de Cada Membro</h1>
+    <p>Arraste a virtude da área externa para o local correto no corpo.</p>
+
+    <div class="container">
+        <div id="external-area"></div>
+
+        <div id="puzzle-board"></div>
+    </div>
+    
+    <div id="victory-message">
+        <h2>Unidade Alcançada!</h2>
+        <p>"Ajustado e consolidado pelo auxílio de todas as juntas..." (Efésios 4:16)</p>
+    </div>
+
+    <script>
+        const IMAGE_URL = 'imagem1.jpg'; 
+        const words = ["Amor", "Fé", "Graça", "Paz", "Serviço", "União", "Perdão", "Mansidão", "Zelo"];
+        
+        const externalArea = document.getElementById('external-area');
+        const board = document.getElementById('puzzle-board');
+        const winMsg = document.getElementById('victory-message');
+
+        let draggedTileValue = null;
+
+        // 1. Criar os espaços (slots) no tabuleiro
+        for (let i = 0; i < 9; i++) {
+            const slot = document.createElement('div');
+            slot.className = 'slot';
+            slot.dataset.index = i;
+            
+            slot.ondragover = (e) => e.preventDefault();
+            slot.ondrop = (e) => handleDrop(e, i);
+            board.appendChild(slot);
+        }
+
+        // 2. Criar as peças na área externa de forma embaralhada
+        const shuffledIndexes = [...Array(9).keys()].sort(() => Math.random() - 0.5);
+        
+        shuffledIndexes.forEach(val => {
+            const tile = document.createElement('div');
+            tile.className = 'tile';
+            tile.innerText = words[val];
+            tile.draggable = true;
+            tile.dataset.value = val;
+            tile.id = 'tile-' + val;
+
+            tile.ondragstart = (e) => {
+                draggedTileValue = val;
+                e.dataTransfer.setData('text', val);
+            };
+
+            externalArea.appendChild(tile);
+        });
+
+        function handleDrop(e, slotIndex) {
+            e.preventDefault();
+            const tileValue = parseInt(draggedTileValue);
+            const tileElement = document.getElementById('tile-' + tileValue);
+
+            // LOGICA: Só aceita se a peça for a correta para aquele slot
+            if (tileValue === slotIndex) {
+                const slot = e.target.classList.contains('slot') ? e.target : e.target.parentElement;
+                
+                // Revela a imagem
+                tileElement.classList.add('revealed');
+                tileElement.innerText = '';
+                tileElement.draggable = false;
+                
+                const row = Math.floor(tileValue / 3);
+                const col = tileValue % 3;
+                tileElement.style.backgroundImage = `url(${IMAGE_URL})`;
+                tileElement.style.backgroundPosition = `-${col * 150}px -${row * 150}px`;
+                
+                slot.appendChild(tileElement);
+                checkVictory();
+            } else {
+                // Errou: A peça volta com um efeito visual (opcional)
+                alert("Tente outro lugar!");
+            }
+        }
+
+        function checkVictory() {
+            if (board.querySelectorAll('.revealed').length === 9) {
+                winMsg.style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>
